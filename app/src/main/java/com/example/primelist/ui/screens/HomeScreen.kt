@@ -1,6 +1,7 @@
 package com.example.primelist.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,11 +18,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.primelist.ui.theme.*
 
 data class TaskItem(
@@ -37,7 +38,7 @@ data class CategoryStat(
 )
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(navController: NavController) {
     val categories = remember {
         listOf(
             CategoryStat(title = "Business", taskCount = 10, progress = 0.6f),
@@ -66,7 +67,7 @@ fun HomeScreen() {
                 .padding(horizontal = 20.dp)
         ) {
             Spacer(modifier = Modifier.height(24.dp))
-            TopBar()
+            TopBar(onMenuClick = { navController.navigate("profile") })
 
             Spacer(modifier = Modifier.height(24.dp))
             Text(
@@ -137,7 +138,7 @@ fun HomeScreen() {
 }
 
 @Composable
-private fun TopBar() {
+private fun TopBar(onMenuClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -146,7 +147,8 @@ private fun TopBar() {
         Icon(
             imageVector = Icons.Filled.Menu,
             contentDescription = "Menu",
-            tint = TextPrimary
+            tint = TextPrimary,
+            modifier = Modifier.clickable { onMenuClick() }
         )
         Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
             Icon(
@@ -213,7 +215,8 @@ private fun TaskRow(task: TaskItem, onToggle: () -> Unit) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
             .background(DarkNavyCard)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = 16.dp, vertical = 14.dp)
+            .clickable { onToggle() },
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
