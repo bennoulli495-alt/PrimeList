@@ -12,6 +12,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.primelist.ui.screens.HomeScreen
+import com.example.primelist.ui.screens.ProfileScreen
 import com.example.primelist.ui.theme.PrimeListTheme
 
 class MainActivity : ComponentActivity() {
@@ -37,10 +38,10 @@ fun PrimeListNavHost() {
         startDestination = "home"
     ) {
         composable("home") {
-            HomeScreen()
+            HomeScreen(navController = navController)
         }
         composable("profile") {
-            ProfileScreen() 
+            ProfileScreen(navController = navController)
         }
     }
 }
