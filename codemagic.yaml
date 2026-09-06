@@ -4,12 +4,8 @@ workflows:
     max_build_duration: 30
     instance_type: mac_mini_m2
     environment:
-      groups:
-        - keystore_credentials # add if/when you set up signing
       vars:
         PACKAGE_NAME: "com.example.primelist"
-      android_signing:
-        - primelist_keystore # optional, only needed for release signing
       java: 17
     scripts:
       - name: Set up local.properties
@@ -25,11 +21,3 @@ workflows:
     artifacts:
       - app/build/outputs/**/*.apk
       - app/build/outputs/**/mapping.txt
-
-    publishing:
-      email:
-        recipients:
-          - your-email@example.com
-        notify:
-          success: true
-          failure: true
