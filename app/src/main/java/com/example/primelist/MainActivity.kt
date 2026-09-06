@@ -40,7 +40,7 @@ fun PrimeListNavHost() {
             HomeScreen()
         }
         composable("profile") {
-            // ProfileScreen will be added in a later file
+            ProfileScreen() 
         }
     }
 }
