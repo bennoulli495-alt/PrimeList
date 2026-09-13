@@ -5,15 +5,20 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Surface
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.compose.ui.unit.dp
 import com.example.primelist.ui.screens.HomeScreen
 import com.example.primelist.ui.screens.ProfileScreen
+import com.example.primelist.ui.theme.DarkNavyBackground
 import com.example.primelist.ui.theme.PrimeListTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,7 +27,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             PrimeListTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    PrimeListNavHost()
+                    PrimeListApp()
                 }
             }
         }
@@ -30,18 +35,29 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun PrimeListNavHost() {
-    val navController = rememberNavController()
+fun PrimeListApp() {
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
-    NavHost(
-        navController = navController,
-        startDestination = "home"
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet(
+                drawerContainerColor = DarkNavyBackground,
+                modifier = Modifier.fillMaxSize(0.8f)
+            ) {
+                ProfileScreen(
+                    onBackClick = {
+                        scope.launch { drawerState.close() }
+                    }
+                )
+            }
+        }
     ) {
-        composable("home") {
-            HomeScreen(navController = navController)
-        }
-        composable("profile") {
-            ProfileScreen(navController = navController)
-        }
+        HomeScreen(
+            onMenuClick = {
+                scope.launch { drawerState.open() }
+            }
+        )
     }
 }
