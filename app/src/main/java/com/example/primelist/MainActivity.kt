@@ -44,7 +44,7 @@ fun PrimeListApp() {
         drawerContent = {
             ModalDrawerSheet(
                 drawerContainerColor = DarkNavyBackground,
-                modifier = Modifier.fillMaxSize(0.8f)
+                modifier = Modifier.fillMaxWidth(0.8f).fillMaxHeight()
             ) {
                 ProfileScreen(
                     onBackClick = {
