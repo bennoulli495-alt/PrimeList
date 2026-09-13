@@ -15,7 +15,7 @@ workflows:
       - name: Build debug APK (using system Gradle)
         script: |
           cd $CM_BUILD_DIR
-          gradle assembleDebug
+          gradle clean assembleDebug
 
     artifacts:
       - app/build/outputs/**/*.apk
