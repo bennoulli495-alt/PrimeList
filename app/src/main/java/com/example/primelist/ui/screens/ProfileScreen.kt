@@ -24,11 +24,10 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import com.example.primelist.ui.theme.*
 
 @Composable
-fun ProfileScreen(navController: NavController) {
+fun ProfileScreen(onBackClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -45,7 +44,7 @@ fun ProfileScreen(navController: NavController) {
                 imageVector = Icons.Filled.ArrowBack,
                 contentDescription = "Back",
                 tint = TextPrimary,
-                modifier = Modifier.clickable { navController.popBackStack() }
+                modifier = Modifier.clickable { onBackClick() }
             )
 
             Spacer(modifier = Modifier.height(28.dp))
