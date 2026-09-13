@@ -24,7 +24,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import com.example.primelist.ui.theme.*
 
 data class TaskItem(
@@ -40,7 +39,7 @@ data class CategoryStat(
 )
 
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(onMenuClick: () -> Unit) {
     val categories = remember {
         listOf(
             CategoryStat(title = "Business", taskCount = 10, progress = 0.6f),
@@ -69,7 +68,7 @@ fun HomeScreen(navController: NavController) {
                 .padding(horizontal = 20.dp)
         ) {
             Spacer(modifier = Modifier.height(24.dp))
-            TopBar(onMenuClick = { navController.navigate("profile") })
+            TopBar(onMenuClick = onMenuClick)
 
             Spacer(modifier = Modifier.height(24.dp))
             Text(
