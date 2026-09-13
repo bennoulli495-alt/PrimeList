@@ -155,12 +155,14 @@ private fun TopBar(onMenuClick: () -> Unit) {
             Icon(
                 imageVector = Icons.Filled.Search,
                 contentDescription = "Search",
-                tint = TextPrimary
+                tint = TextPrimary,
+                modifier = Modifier.size(24.dp)
             )
-            Icon(
+            TextPrimary(
                 imageVector = Icons.Filled.Notifications,
                 contentDescription = "Notifications",
-                tint = TextPrimary
+                tint = TextPrimary,
+                modifier = Modifier.size(24.dp)
             )
         }
     }
