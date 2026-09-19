@@ -65,6 +65,7 @@ fun HomeScreen(onMenuClick: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
                 .padding(horizontal = 20.dp)
         ) {
             Spacer(modifier = Modifier.height(24.dp))
