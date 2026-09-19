@@ -158,7 +158,7 @@ private fun TopBar(onMenuClick: () -> Unit) {
                 tint = TextPrimary,
                 modifier = Modifier.size(24.dp)
             )
-            TextPrimary(
+            Icon(
                 imageVector = Icons.Filled.Notifications,
                 contentDescription = "Notifications",
                 tint = TextPrimary,
