@@ -57,6 +57,8 @@ fun HomeScreen(onMenuClick: () -> Unit) {
         )
     }
 
+    var showAddTaskSheet by remember { mutableStateOf(false) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -126,7 +128,7 @@ fun HomeScreen(onMenuClick: () -> Unit) {
         }
 
         FloatingActionButton(
-            onClick = { /* empty logic - add task later */ },
+            onClick = { showAddTaskSheet = true },
             containerColor = PinkAccent,
             contentColor = TextPrimary,
             shape = CircleShape,
@@ -135,6 +137,13 @@ fun HomeScreen(onMenuClick: () -> Unit) {
                 .padding(20.dp)
         ) {
             Icon(imageVector = Icons.Filled.Add, contentDescription = "Add task")
+        }
+
+        if (showAddTaskSheet) {
+            AddTaskBottomSheet(
+                onDismiss = { showAddTaskSheet = false },
+                onAddTask = { showAddTaskSheet = false }
+            )
         }
     }
 }
@@ -150,7 +159,9 @@ private fun TopBar(onMenuClick: () -> Unit) {
             imageVector = Icons.Filled.Menu,
             contentDescription = "Menu",
             tint = TextPrimary,
-            modifier = Modifier.clickable { onMenuClick() }
+            modifier = Modifier
+                .size(24.dp)
+                .clickable { onMenuClick() }
         )
         Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
             Icon(
