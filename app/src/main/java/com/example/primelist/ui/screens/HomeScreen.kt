@@ -58,6 +58,7 @@ fun HomeScreen(onMenuClick: () -> Unit) {
     }
 
     var showAddTaskSheet by remember { mutableStateOf(false) }
+    var selectedCategory by remember { mutableStateOf<String?>(null) }
 
     Box(
         modifier = Modifier
@@ -95,7 +96,11 @@ fun HomeScreen(onMenuClick: () -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 categories.forEach { category ->
-                    CategoryCard(category = category, modifier = Modifier.weight(1f))
+                    CategoryCard(
+                        category = category,
+                        modifier = Modifier.weight(1f),
+                        onClick = { selectedCategory = category.title }
+                    )
                 }
             }
 
@@ -145,6 +150,13 @@ fun HomeScreen(onMenuClick: () -> Unit) {
                 onAddTask = { showAddTaskSheet = false }
             )
         }
+
+        selectedCategory?.let { categoryName ->
+            CategoryScreen(
+                categoryName = categoryName,
+                onBackClick = { selectedCategory = null }
+            )
+        }
     }
 }
 
@@ -181,11 +193,12 @@ private fun TopBar(onMenuClick: () -> Unit) {
 }
 
 @Composable
-private fun CategoryCard(category: CategoryStat, modifier: Modifier = Modifier) {
+private fun CategoryCard(category: CategoryStat, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
             .background(DarkNavyCard)
+            .clickable { onClick() }
             .padding(16.dp)
     ) {
         Text(
