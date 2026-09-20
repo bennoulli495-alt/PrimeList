@@ -21,6 +21,12 @@ import com.example.primelist.ui.screens.ProfileScreen
 import com.example.primelist.ui.theme.DarkNavyBackground
 import com.example.primelist.ui.theme.PrimeListTheme
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.example.primelist.ui.screens.AnalyticsScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,26 +46,37 @@ class MainActivity : ComponentActivity() {
 fun PrimeListApp() {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    var showAnalytics by remember { mutableStateOf(false) }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet(
-                drawerContainerColor = DarkNavyBackground,
-                modifier = Modifier.fillMaxWidth(0.8f).fillMaxHeight()
-            ) {
-                ProfileScreen(
-                    onBackClick = {
-                        scope.launch { drawerState.close() }
-                    }
-                )
+    Box(modifier = Modifier.fillMaxSize()) {
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            drawerContent = {
+                ModalDrawerSheet(
+                    drawerContainerColor = DarkNavyBackground,
+                    modifier = Modifier.fillMaxWidth(0.8f).fillMaxHeight()
+                ) {
+                    ProfileScreen(
+                        onBackClick = {
+                            scope.launch { drawerState.close() }
+                        },
+                        onAnalyticsClick = {
+                            scope.launch { drawerState.close() }
+                            showAnalytics = true
+                        }
+                    )
+                }
             }
+        ) {
+            HomeScreen(
+                onMenuClick = {
+                    scope.launch { drawerState.open() }
+                }
+            )
         }
-    ) {
-        HomeScreen(
-            onMenuClick = {
-                scope.launch { drawerState.open() }
-            }
-        )
+
+        if (showAnalytics) {
+            AnalyticsScreen(onBackClick = { showAnalytics = false })
+        }
     }
 }
