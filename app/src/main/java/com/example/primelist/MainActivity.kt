@@ -27,6 +27,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.example.primelist.ui.screens.AnalyticsScreen
+import com.example.primelist.ui.screens.TemplatesScreen
+import com.example.primelist.ui.screens.CategoriesListScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,6 +49,8 @@ fun PrimeListApp() {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var showAnalytics by remember { mutableStateOf(false) }
+    var showTemplates by remember { mutableStateOf(false) }
+    var showCategories by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         ModalNavigationDrawer(
@@ -63,7 +67,16 @@ fun PrimeListApp() {
                         onAnalyticsClick = {
                             scope.launch { drawerState.close() }
                             showAnalytics = true
-                        }
+                        },
+                        onTemplatesClick = {
+        scope.launch { drawerState.close() }
+        showTemplates = true
+    },
+    onCategoriesClick = {
+        scope.launch { drawerState.close() }
+        showCategories = true
+    }
+)
                     )
                 }
             }
@@ -78,5 +91,12 @@ fun PrimeListApp() {
         if (showAnalytics) {
             AnalyticsScreen(onBackClick = { showAnalytics = false })
         }
+        if (showTemplates) {
+    TemplatesScreen(onBackClick = { showTemplates = false })
+}
+
+if (showCategories) {
+    CategoriesListScreen(onBackClick = { showCategories = false })
+}
     }
 }
