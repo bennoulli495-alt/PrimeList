@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.example.primelist.ui.theme.*
 
 @Composable
-fun ProfileScreen(onBackClick: () -> Unit) {
+fun ProfileScreen(onBackClick: () -> Unit, onAnalyticsClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -70,7 +70,7 @@ fun ProfileScreen(onBackClick: () -> Unit) {
             Spacer(modifier = Modifier.height(18.dp))
             MenuRow(icon = Icons.Filled.Category, label = "Categories")
             Spacer(modifier = Modifier.height(18.dp))
-            MenuRow(icon = Icons.Filled.BarChart, label = "Analytics")
+            MenuRow(icon = Icons.Filled.BarChart, label = "Analytics", onClick = onAnalyticsClick)
 
             Spacer(modifier = Modifier.height(36.dp))
             Text(
@@ -117,8 +117,11 @@ private fun AvatarWithRing() {
 }
 
 @Composable
-private fun MenuRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+private fun MenuRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit = {}) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.clickable { onClick() }
+    ) {
         Icon(
             imageVector = icon,
             contentDescription = label,
