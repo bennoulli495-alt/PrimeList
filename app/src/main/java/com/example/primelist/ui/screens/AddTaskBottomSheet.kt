@@ -2,7 +2,9 @@ package com.example.primelist.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -19,12 +21,15 @@ import com.example.primelist.ui.theme.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTaskBottomSheet(
+    categoryNames: List<String>,
     onDismiss: () -> Unit,
-    onAddTask: () -> Unit
+    onAddTask: (title: String, category: String) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState()
     var taskTitle by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf("Business") }
+    var selectedCategory by remember(categoryNames) {
+        mutableStateOf(categoryNames.firstOrNull() ?: "")
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -69,17 +74,25 @@ fun AddTaskBottomSheet(
             )
             Spacer(modifier = Modifier.height(10.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                CategoryChip(
-                    label = "Business",
-                    isSelected = selectedCategory == "Business",
-                    onClick = { selectedCategory = "Business" }
+            if (categoryNames.isEmpty()) {
+                Text(
+                    text = "No categories yet — add one from Categories first",
+                    color = TextMuted,
+                    fontSize = 12.sp
                 )
-                CategoryChip(
-                    label = "Personal",
-                    isSelected = selectedCategory == "Personal",
-                    onClick = { selectedCategory = "Personal" }
-                )
+            } else {
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    categoryNames.forEach { name ->
+                        CategoryChip(
+                            label = name,
+                            isSelected = selectedCategory == name,
+                            onClick = { selectedCategory = name }
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -117,7 +130,11 @@ fun AddTaskBottomSheet(
             Spacer(modifier = Modifier.height(28.dp))
 
             Button(
-                onClick = { /* empty logic - save task later */ onAddTask() },
+                onClick = {
+                    if (taskTitle.isNotBlank() && selectedCategory.isNotBlank()) {
+                        onAddTask(taskTitle, selectedCategory)
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
