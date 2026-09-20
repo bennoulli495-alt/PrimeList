@@ -21,22 +21,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.primelist.ui.theme.*
+import com.example.primelist.viewmodel.TaskViewModel
 
 @Composable
 fun CategoryScreen(
     categoryName: String,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    viewModel: TaskViewModel = viewModel()
 ) {
-    val tasks = remember {
-        mutableStateListOf(
-            TaskItem(1, "Daily meeting with team", isChecked = false),
-            TaskItem(2, "Pay for rent", isChecked = true),
-            TaskItem(3, "Check emails", isChecked = false),
-            TaskItem(4, "Lunch with Emma", isChecked = false),
-            TaskItem(5, "Meditation", isChecked = false)
-        )
-    }
+    val tasks by viewModel.getTasksByCategory(categoryName).collectAsState(initial = emptyList())
 
     Box(
         modifier = Modifier
@@ -77,43 +72,48 @@ fun CategoryScreen(
             )
 
             Spacer(modifier = Modifier.height(20.dp))
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.weight(1f)
-            ) {
-                items(tasks) { task ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(DarkNavyCard)
-                            .padding(horizontal = 16.dp, vertical = 14.dp)
-                            .clickable {
-                                val index = tasks.indexOf(task)
-                                if (index != -1) {
-                                    tasks[index] = task.copy(isChecked = !task.isChecked)
-                                }
-                            },
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = if (task.isChecked) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked,
-                            contentDescription = null,
-                            tint = if (task.isChecked) CheckedGreen else TextMuted,
+
+            if (tasks.isEmpty()) {
+                Text(
+                    text = "No tasks in this category yet",
+                    color = TextMuted,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(top = 40.dp)
+                )
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    items(tasks) { task ->
+                        Row(
                             modifier = Modifier
-                                .size(22.dp)
-                                .clip(CircleShape)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = task.title,
-                            color = if (task.isChecked) TextMuted else TextPrimary,
-                            fontSize = 14.sp,
-                            textDecoration = if (task.isChecked) TextDecoration.LineThrough else TextDecoration.None
-                        )
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(DarkNavyCard)
+                                .padding(horizontal = 16.dp, vertical = 14.dp)
+                                .clickable { viewModel.toggleTask(task) },
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = if (task.isChecked) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked,
+                                contentDescription = null,
+                                tint = if (task.isChecked) CheckedGreen else TextMuted,
+                                modifier = Modifier
+                                    .size(22.dp)
+                                    .clip(CircleShape)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = task.title,
+                                color = if (task.isChecked) TextMuted else TextPrimary,
+                                fontSize = 14.sp,
+                                textDecoration = if (task.isChecked) TextDecoration.LineThrough else TextDecoration.None
+                            )
+                        }
                     }
+                    item { Spacer(modifier = Modifier.height(20.dp)) }
                 }
-                item { Spacer(modifier = Modifier.height(20.dp)) }
             }
         }
     }
