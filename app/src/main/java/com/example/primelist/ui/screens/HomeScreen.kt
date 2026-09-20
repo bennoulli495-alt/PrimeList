@@ -24,13 +24,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.primelist.data.Task
 import com.example.primelist.ui.theme.*
-
-data class TaskItem(
-    val id: Int,
-    val title: String,
-    var isChecked: Boolean
-)
+import com.example.primelist.viewmodel.TaskViewModel
 
 data class CategoryStat(
     val title: String,
@@ -39,21 +36,17 @@ data class CategoryStat(
 )
 
 @Composable
-fun HomeScreen(onMenuClick: () -> Unit) {
-    val categories = remember {
-        listOf(
-            CategoryStat(title = "Business", taskCount = 10, progress = 0.6f),
-            CategoryStat(title = "Personal", taskCount = 10, progress = 0.4f)
-        )
-    }
+fun HomeScreen(onMenuClick: () -> Unit, viewModel: TaskViewModel = viewModel()) {
+    val tasks by viewModel.allTasks.collectAsState()
+    val categories by viewModel.allCategories.collectAsState()
 
-    val tasks = remember {
-        mutableStateListOf(
-            TaskItem(1, "Daily meeting with team", isChecked = false),
-            TaskItem(2, "Pay for rent", isChecked = true),
-            TaskItem(3, "Check emails", isChecked = false),
-            TaskItem(4, "Lunch with Emma", isChecked = false),
-            TaskItem(5, "Meditation", isChecked = false)
+    val categoryStats = categories.map { category ->
+        val categoryTasks = tasks.filter { it.categoryName == category.name }
+        val completed = categoryTasks.count { it.isChecked }
+        CategoryStat(
+            title = category.name,
+            taskCount = categoryTasks.size,
+            progress = if (categoryTasks.isNotEmpty()) completed.toFloat() / categoryTasks.size else 0f
         )
     }
 
@@ -91,16 +84,24 @@ fun HomeScreen(onMenuClick: () -> Unit) {
             )
 
             Spacer(modifier = Modifier.height(10.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                categories.forEach { category ->
-                    CategoryCard(
-                        category = category,
-                        modifier = Modifier.weight(1f),
-                        onClick = { selectedCategory = category.title }
-                    )
+            if (categoryStats.isEmpty()) {
+                Text(
+                    text = "No categories yet",
+                    color = TextMuted,
+                    fontSize = 13.sp
+                )
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    categoryStats.forEach { category ->
+                        CategoryCard(
+                            category = category,
+                            modifier = Modifier.weight(1f),
+                            onClick = { selectedCategory = category.title }
+                        )
+                    }
                 }
             }
 
@@ -120,12 +121,7 @@ fun HomeScreen(onMenuClick: () -> Unit) {
                 items(tasks) { task ->
                     TaskRow(
                         task = task,
-                        onToggle = {
-                            val index = tasks.indexOf(task)
-                            if (index != -1) {
-                                tasks[index] = task.copy(isChecked = !task.isChecked)
-                            }
-                        }
+                        onToggle = { viewModel.toggleTask(task) }
                     )
                 }
                 item { Spacer(modifier = Modifier.height(80.dp)) }
@@ -146,8 +142,12 @@ fun HomeScreen(onMenuClick: () -> Unit) {
 
         if (showAddTaskSheet) {
             AddTaskBottomSheet(
+                categoryNames = categories.map { it.name },
                 onDismiss = { showAddTaskSheet = false },
-                onAddTask = { showAddTaskSheet = false }
+                onAddTask = { title, category ->
+                    viewModel.addTask(title, category, null)
+                    showAddTaskSheet = false
+                }
             )
         }
 
@@ -237,7 +237,7 @@ private fun CategoryCard(category: CategoryStat, modifier: Modifier = Modifier, 
 }
 
 @Composable
-private fun TaskRow(task: TaskItem, onToggle: () -> Unit) {
+private fun TaskRow(task: Task, onToggle: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
