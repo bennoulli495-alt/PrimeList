@@ -2,9 +2,11 @@ package com.example.primelist.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -20,23 +22,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.primelist.data.Task
 import com.example.primelist.ui.theme.*
-
-data class TemplateItem(
-    val id: Int,
-    val title: String,
-    val category: String
-)
+import com.example.primelist.viewmodel.TaskViewModel
 
 @Composable
-fun TemplatesScreen(onBackClick: () -> Unit) {
-    val templates = remember {
-        mutableStateListOf(
-            TemplateItem(1, "Daily meeting with team", "Business"),
-            TemplateItem(2, "Pay for rent", "Personal"),
-            TemplateItem(3, "Check emails", "Business")
-        )
-    }
+fun TemplatesScreen(
+    onBackClick: () -> Unit,
+    viewModel: TaskViewModel = viewModel()
+) {
+    val templates by viewModel.allTemplates.collectAsState()
+    val categories by viewModel.allCategories.collectAsState()
 
     var showAddTemplateSheet by remember { mutableStateOf(false) }
 
@@ -90,7 +87,9 @@ fun TemplatesScreen(onBackClick: () -> Unit) {
                     items(templates) { template ->
                         TemplateCard(
                             template = template,
-                            onUseClick = { /* empty logic - quick-add to Home tasks later */ }
+                            onUseClick = {
+                                viewModel.addTask(template.title, template.categoryName, null)
+                            }
                         )
                     }
                     item { Spacer(modifier = Modifier.height(80.dp)) }
@@ -112,15 +111,10 @@ fun TemplatesScreen(onBackClick: () -> Unit) {
 
         if (showAddTemplateSheet) {
             AddTemplateBottomSheet(
+                categoryNames = categories.map { it.name },
                 onDismiss = { showAddTemplateSheet = false },
                 onSaveTemplate = { title, category ->
-                    templates.add(
-                        TemplateItem(
-                            id = (templates.maxOfOrNull { it.id } ?: 0) + 1,
-                            title = title,
-                            category = category
-                        )
-                    )
+                    viewModel.addTask(title, category, null, isTemplate = true)
                     showAddTemplateSheet = false
                 }
             )
@@ -129,7 +123,7 @@ fun TemplatesScreen(onBackClick: () -> Unit) {
 }
 
 @Composable
-private fun TemplateCard(template: TemplateItem, onUseClick: () -> Unit) {
+private fun TemplateCard(template: Task, onUseClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -160,7 +154,7 @@ private fun TemplateCard(template: TemplateItem, onUseClick: () -> Unit) {
                     .padding(horizontal = 10.dp, vertical = 3.dp)
             ) {
                 Text(
-                    text = template.category,
+                    text = template.categoryName,
                     color = TextSecondary,
                     fontSize = 11.sp
                 )
@@ -204,12 +198,15 @@ private fun EmptyTemplatesState() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddTemplateBottomSheet(
+    categoryNames: List<String>,
     onDismiss: () -> Unit,
     onSaveTemplate: (title: String, category: String) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState()
     var templateTitle by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf("Business") }
+    var selectedCategory by remember(categoryNames) {
+        mutableStateOf(categoryNames.firstOrNull() ?: "")
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -254,24 +251,32 @@ private fun AddTemplateBottomSheet(
             )
             Spacer(modifier = Modifier.height(10.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                TemplateCategoryChip(
-                    label = "Business",
-                    isSelected = selectedCategory == "Business",
-                    onClick = { selectedCategory = "Business" }
+            if (categoryNames.isEmpty()) {
+                Text(
+                    text = "No categories yet — add one from Categories first",
+                    color = TextMuted,
+                    fontSize = 12.sp
                 )
-                TemplateCategoryChip(
-                    label = "Personal",
-                    isSelected = selectedCategory == "Personal",
-                    onClick = { selectedCategory = "Personal" }
-                )
+            } else {
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    categoryNames.forEach { name ->
+                        TemplateCategoryChip(
+                            label = name,
+                            isSelected = selectedCategory == name,
+                            onClick = { selectedCategory = name }
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(28.dp))
 
             Button(
                 onClick = {
-                    if (templateTitle.isNotBlank()) {
+                    if (templateTitle.isNotBlank() && selectedCategory.isNotBlank()) {
                         onSaveTemplate(templateTitle, selectedCategory)
                     }
                 },
