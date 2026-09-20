@@ -3,11 +3,12 @@ package com.example.primelist.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,18 +17,30 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.primelist.ui.theme.*
+import com.example.primelist.viewmodel.TaskViewModel
 
 @Composable
-fun CategoriesListScreen(onBackClick: () -> Unit) {
-    val categories = remember {
-        listOf(
-            CategoryStat(title = "Business", taskCount = 10, progress = 0.6f),
-            CategoryStat(title = "Personal", taskCount = 10, progress = 0.4f)
+fun CategoriesListScreen(
+    onBackClick: () -> Unit,
+    viewModel: TaskViewModel = viewModel()
+) {
+    val categories by viewModel.allCategories.collectAsState()
+    val tasks by viewModel.allTasks.collectAsState()
+
+    val categoryStats = categories.map { category ->
+        val categoryTasks = tasks.filter { it.categoryName == category.name }
+        val completed = categoryTasks.count { it.isChecked }
+        CategoryStat(
+            title = category.name,
+            taskCount = categoryTasks.size,
+            progress = if (categoryTasks.isNotEmpty()) completed.toFloat() / categoryTasks.size else 0f
         )
     }
 
     var selectedCategory by remember { mutableStateOf<String?>(null) }
+    var showAddCategoryDialog by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -62,27 +75,60 @@ fun CategoriesListScreen(onBackClick: () -> Unit) {
 
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "${categories.size} categories",
+                text = "${categoryStats.size} categories",
                 color = TextMuted,
                 fontSize = 13.sp
             )
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                categories.forEach { category ->
-                    CategoryListCard(
-                        category = category,
-                        onClick = { selectedCategory = category.title }
-                    )
+            if (categoryStats.isEmpty()) {
+                Text(
+                    text = "No categories yet — tap + to add one",
+                    color = TextMuted,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(top = 40.dp)
+                )
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    categoryStats.forEach { category ->
+                        CategoryListCard(
+                            category = category,
+                            onClick = { selectedCategory = category.title }
+                        )
+                    }
                 }
             }
+
+            Spacer(modifier = Modifier.height(80.dp))
+        }
+
+        FloatingActionButton(
+            onClick = { showAddCategoryDialog = true },
+            containerColor = PinkAccent,
+            contentColor = TextPrimary,
+            shape = CircleShape,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(20.dp)
+        ) {
+            Icon(imageVector = Icons.Filled.Add, contentDescription = "Add category")
         }
 
         selectedCategory?.let { categoryName ->
             CategoryScreen(
                 categoryName = categoryName,
                 onBackClick = { selectedCategory = null }
+            )
+        }
+
+        if (showAddCategoryDialog) {
+            AddCategoryDialog(
+                onDismiss = { showAddCategoryDialog = false },
+                onConfirm = { name ->
+                    viewModel.addCategory(name)
+                    showAddCategoryDialog = false
+                }
             )
         }
     }
@@ -131,4 +177,42 @@ private fun CategoryListCard(category: CategoryStat, onClick: () -> Unit) {
             )
         }
     }
+}
+
+@Composable
+private fun AddCategoryDialog(onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
+    var name by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = DarkNavyCard,
+        title = {
+            Text(text = "New Category", color = TextPrimary, fontWeight = FontWeight.Bold)
+        },
+        text = {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                placeholder = { Text("Category name", color = TextMuted) },
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = TextPrimary,
+                    unfocusedTextColor = TextPrimary,
+                    focusedBorderColor = PinkAccent,
+                    unfocusedBorderColor = DividerColor,
+                    cursorColor = PinkAccent
+                )
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { if (name.isNotBlank()) onConfirm(name) }) {
+                Text(text = "Add", color = PinkAccentLight, fontWeight = FontWeight.SemiBold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = "Cancel", color = TextMuted)
+            }
+        }
+    )
 }
