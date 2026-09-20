@@ -77,7 +77,6 @@ fun PrimeListApp() {
         showCategories = true
     }
 )
-                    )
                 }
             }
         ) {
