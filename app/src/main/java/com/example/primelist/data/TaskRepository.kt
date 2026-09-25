@@ -20,8 +20,15 @@ class TaskRepository(
 
     suspend fun deleteTask(task: Task) = taskDao.deleteTask(task)
 
-    suspend fun toggleTask(task: Task) =
-        taskDao.updateTask(task.copy(isChecked = !task.isChecked))
+    suspend fun toggleTask(task: Task) {
+        val nowChecked = !task.isChecked
+        taskDao.updateTask(
+            task.copy(
+                isChecked = nowChecked,
+                completedAt = if (nowChecked) System.currentTimeMillis() else null
+            )
+        )
+    }
 
     suspend fun addCategory(name: String) =
         categoryDao.insertCategory(Category(name = name))
