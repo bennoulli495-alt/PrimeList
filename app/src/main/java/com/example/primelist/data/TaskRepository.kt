@@ -30,7 +30,9 @@ class TaskRepository(
         categoryDao.deleteCategory(category)
 
     suspend fun seedDefaultCategoriesIfEmpty() {
-        categoryDao.insertCategory(Category(name = "Business"))
-        categoryDao.insertCategory(Category(name = "Personal"))
+        if (categoryDao.getCategoryCount() == 0) {
+            categoryDao.insertCategory(Category(name = "Business"))
+            categoryDao.insertCategory(Category(name = "Personal"))
+        }
     }
 }
