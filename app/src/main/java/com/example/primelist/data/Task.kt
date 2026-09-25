@@ -12,5 +12,6 @@ data class Task(
     val isChecked: Boolean = false,
     val dueDateTime: Long? = null,
     val isTemplate: Boolean = false,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val completedAt: Long? = null
 )
