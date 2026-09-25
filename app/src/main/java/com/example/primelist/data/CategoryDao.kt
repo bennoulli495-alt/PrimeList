@@ -13,6 +13,9 @@ interface CategoryDao {
     @Query("SELECT * FROM categories ORDER BY id ASC")
     fun getAllCategories(): Flow<List<Category>>
 
+    @Query("SELECT COUNT(*) FROM categories")
+    suspend fun getCategoryCount(): Int
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertCategory(category: Category)
 
