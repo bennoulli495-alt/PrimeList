@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -13,8 +12,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,37 +23,80 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.primelist.data.Task
 import com.example.primelist.ui.theme.*
+import com.example.primelist.viewmodel.TaskViewModel
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.TextStyle
+import java.util.Locale
+
+private fun Long.toLocalDate(): LocalDate =
+    Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate()
 
 data class DayProgress(val label: String, val value: Float)
 data class CategoryBreakdown(val title: String, val taskCount: Int, val progress: Float)
 
 @Composable
-fun AnalyticsScreen(onBackClick: () -> Unit) {
-    val completionRate = remember { 0.72f }
-    val streakDays = remember { 6 }
-    val completedToday = remember { 5 }
-    val remainingToday = remember { 3 }
-    val totalAllTime = remember { 248 }
-    val bestDay = remember { "Wednesday" }
-    val worstDay = remember { "Sunday" }
+fun AnalyticsScreen(onBackClick: () -> Unit, viewModel: TaskViewModel = viewModel()) {
+    val tasks by viewModel.allTasks.collectAsState()
+    val categories by viewModel.allCategories.collectAsState()
 
-    val weeklyProgress = remember {
-        listOf(
-            DayProgress("Mon", 0.5f),
-            DayProgress("Tue", 0.7f),
-            DayProgress("Wed", 0.9f),
-            DayProgress("Thu", 0.4f),
-            DayProgress("Fri", 0.6f),
-            DayProgress("Sat", 0.3f),
-            DayProgress("Sun", 0.2f)
-        )
+    val completedTasks = tasks.filter { it.isChecked && it.completedAt != null }
+    val today = remember { LocalDate.now() }
+
+    val completionRate = if (tasks.isNotEmpty()) completedTasks.size / tasks.size.toFloat() else 0f
+    val completedToday = completedTasks.count { it.completedAt!!.toLocalDate() == today }
+    val remainingCount = tasks.count { !it.isChecked }
+    val totalAllTime = tasks.size
+
+    val streakDays = remember(completedTasks) {
+        var streak = 0
+        var day = if (completedTasks.any { it.completedAt!!.toLocalDate() == today }) today else today.minusDays(1)
+        while (completedTasks.any { it.completedAt!!.toLocalDate() == day }) {
+            streak++
+            day = day.minusDays(1)
+        }
+        streak
     }
 
-    val categoryBreakdown = remember {
-        listOf(
-            CategoryBreakdown("Business", 10, 0.6f),
-            CategoryBreakdown("Personal", 10, 0.4f)
+    val weeklyProgress = remember(completedTasks) {
+        val last7Days = (6 downTo 0).map { today.minusDays(it.toLong()) }
+        val counts = last7Days.map { day -> completedTasks.count { it.completedAt!!.toLocalDate() == day } }
+        val maxCount = counts.maxOrNull() ?: 0
+        last7Days.mapIndexed { index, day ->
+            DayProgress(
+                label = day.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()),
+                value = if (maxCount > 0) counts[index] / maxCount.toFloat() else 0f
+            )
+        }
+    }
+
+    val bestDay: String
+    val worstDay: String
+    if (completedTasks.isEmpty()) {
+        bestDay = "-"
+        worstDay = "-"
+    } else {
+        val countsByDay = DayOfWeek.entries.associateWith { dow ->
+            completedTasks.count { it.completedAt!!.toLocalDate().dayOfWeek == dow }
+        }
+        bestDay = countsByDay.maxByOrNull { it.value }!!.key
+            .getDisplayName(TextStyle.FULL, Locale.getDefault())
+        worstDay = countsByDay.minByOrNull { it.value }!!.key
+            .getDisplayName(TextStyle.FULL, Locale.getDefault())
+    }
+
+    val categoryBreakdown = categories.map { category ->
+        val categoryTasks = tasks.filter { it.categoryName == category.name }
+        val completed = categoryTasks.count { it.isChecked }
+        CategoryBreakdown(
+            title = category.name,
+            taskCount = categoryTasks.size,
+            progress = if (categoryTasks.isNotEmpty()) completed.toFloat() / categoryTasks.size else 0f
         )
     }
 
@@ -135,7 +176,7 @@ fun AnalyticsScreen(onBackClick: () -> Unit) {
                 )
                 StatCard(
                     label = "Remaining",
-                    value = "$remainingToday",
+                    value = "$remainingCount",
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -148,7 +189,11 @@ fun AnalyticsScreen(onBackClick: () -> Unit) {
                 fontWeight = FontWeight.Medium
             )
             Spacer(modifier = Modifier.height(10.dp))
-            CategoryBreakdownCard(categories = categoryBreakdown)
+            if (categoryBreakdown.isEmpty()) {
+                Text(text = "No categories yet", color = TextMuted, fontSize = 13.sp)
+            } else {
+                CategoryBreakdownCard(categories = categoryBreakdown)
+            }
 
             Spacer(modifier = Modifier.height(20.dp))
             Row(
